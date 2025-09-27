@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { validateCron } from "./lib/decoder";
+import { validateCron } from "./lib/validator";
 
 const SYMBOLS = [
   { symbol: "*", description: "wildcard any value" },
