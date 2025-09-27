@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { validateCron } from "./lib/decoder";
 
 const SYMBOLS = [
   { symbol: "*", description: "wildcard any value" },
@@ -15,13 +16,11 @@ const cronExpr = ref("* * * * *");
 const error = ref("");
 
 const decodeCron = (cron: string) => {
-  const values = cron.trim().split(/\s+/);
-  if (values.length !== 5) {
+  const isCronValid = validateCron(cron);
+  if (!isCronValid) {
     error.value = "Invalid cron format";
     return;
   }
-
-  const [minute, hour, dayOfMonth, month, dayOfWeek] = values;
 
   error.value = "";
 };

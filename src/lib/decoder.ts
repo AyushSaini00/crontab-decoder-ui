@@ -222,24 +222,59 @@ const validateRange = (
 
   if (!isFirstValid && !isSecondValid) return false;
 
-  // these would either be the literal number values or indices of allowed single values
-  let firstIdx = Number(first),
-    secondIdx = Number(second);
-
-  if (allowedSingleValues?.includes(first.toUpperCase())) {
-    const i = allowedSingleValues?.findIndex(
-      (el) => el === first.toUpperCase()
+  // if both are numbers
+  if (isInt(first) && isInt(second)) {
+    return (
+      Number(first) >= min &&
+      Number(second) <= max &&
+      Number(second) >= Number(first)
     );
-    if (i !== -1) firstIdx = i;
-  }
-  if (allowedSingleValues?.includes(second.toUpperCase())) {
-    const i = allowedSingleValues?.findIndex(
-      (el) => el === second.toUpperCase()
-    );
-    if (i !== -1) secondIdx = i;
   }
 
-  return firstIdx >= min && secondIdx <= max && secondIdx >= firstIdx;
+  // if first is num and second is allowed value
+  if (isInt(first) && allowedSingleValues?.includes(second.toUpperCase())) {
+    const firstNum = Number(first);
+    const idx = allowedSingleValues.findIndex(
+      (val) => val === second.toUpperCase()
+    );
+
+    // in case of months, allowed range is [1, 12], but idx would have range [0, 11] as it's an array
+    // to accomodate this we can add low + idx so that direct comparasion can be made.
+    const secondNum = idx + min;
+
+    return firstNum >= min && secondNum <= max && secondNum >= firstNum;
+  }
+
+  // if first is allowed value and second is num
+  if (allowedSingleValues?.includes(first.toUpperCase()) && isInt(second)) {
+    const idx = allowedSingleValues.findIndex(
+      (val) => val === first.toUpperCase()
+    );
+    const secondNum = Number(second);
+    const firstNum = idx + min;
+
+    return firstNum >= min && secondNum <= max && secondNum >= firstNum;
+  }
+
+  // if both are allowed value
+  if (
+    allowedSingleValues?.includes(first.toUpperCase()) &&
+    allowedSingleValues?.includes(second.toUpperCase())
+  ) {
+    const idx1 = allowedSingleValues.findIndex(
+      (val) => val === first.toUpperCase()
+    );
+    const idx2 = allowedSingleValues.findIndex(
+      (val) => val === second.toUpperCase()
+    );
+
+    const firstNum = idx1 + min;
+    const secondNum = idx2 + min;
+
+    return firstNum >= min && secondNum <= max && secondNum >= firstNum;
+  }
+
+  return false;
 };
 
 const validateNum = (token: string, min: number, max: number): boolean => {
