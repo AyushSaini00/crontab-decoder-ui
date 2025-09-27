@@ -1,51 +1,10 @@
-export const SPECIAL_FIELDS = [
-  "@reboot",
-  "@yearly",
-  "@monthly",
-  "@weekly",
-  "@daily",
-  "@hourly",
-] as const;
-
-const FIELD_TYPES = [
-  "minute",
-  "hour",
-  "dayOfMonth",
-  "month",
-  "dayOfWeek",
-] as const;
-
-type FieldType = (typeof FIELD_TYPES)[number];
-
-const ALLOWED_RANGE: Record<FieldType, [number, number]> = {
-  minute: [0, 59],
-  hour: [0, 23],
-  dayOfMonth: [1, 31],
-  month: [1, 12],
-  dayOfWeek: [0, 7],
-};
-
-const ALLOWED_SINGLE_VALUES: Record<
-  Extract<FieldType, "month" | "dayOfWeek">,
-  string[]
-> = {
-  // lowercase values are also valid for cron, we will do that during parsing
-  month: [
-    "JAN",
-    "FEB",
-    "MAR",
-    "APR",
-    "MAY",
-    "JUN",
-    "JUL",
-    "AUG",
-    "SEP",
-    "OCT",
-    "NOV",
-    "DEC",
-  ],
-  dayOfWeek: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"],
-};
+import type { FieldType } from "./constants";
+import {
+  ALLOWED_RANGE,
+  ALLOWED_SINGLE_VALUES,
+  FIELD_TYPES,
+  SPECIAL_FIELDS,
+} from "./constants";
 
 export const validateCron = (cronExpr: string): boolean => {
   if (!cronExpr || !cronExpr.trim()) return false;
@@ -57,10 +16,7 @@ export const validateCron = (cronExpr: string): boolean => {
   if (!first) return false;
 
   // expr could be special / non-standard
-  if (
-    first.startsWith("@") &&
-    SPECIAL_FIELDS.includes(first as (typeof SPECIAL_FIELDS)[number])
-  ) {
+  if (SPECIAL_FIELDS.includes(first as (typeof SPECIAL_FIELDS)[number])) {
     return true;
   }
 
@@ -77,7 +33,7 @@ export const validateCron = (cronExpr: string): boolean => {
   return true;
 };
 
-const getFieldType = (index: number): FieldType => {
+export const getFieldType = (index: number): FieldType => {
   if (index < 0 || index >= FIELD_TYPES.length) {
     throw new Error(`Invalid field index: ${index}.`);
   }
@@ -142,12 +98,12 @@ export const validateField = (
         )
       )
         return false;
-    } else {
-      if (
-        !validateNum(token, lowerAllowedRange, upperAllowedRange) &&
-        !allowedSingleValues?.includes(token.toUpperCase())
-      )
-        return false;
+    } else if (
+      !validateNum(token, lowerAllowedRange, upperAllowedRange) &&
+      !allowedSingleValues?.includes(token.toUpperCase()) &&
+      token !== "*" // to handle cases like: *,n or *,n
+    ) {
+      return false;
     }
   }
 

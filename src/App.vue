@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { validateCron } from "./lib/validator";
+import { decodeCron } from "./lib/decoder";
 
 const SYMBOLS = [
   { symbol: "*", description: "wildcard any value" },
@@ -12,20 +13,26 @@ const SYMBOLS = [
   { symbol: "/", description: "step values. (eg: 2/3 -> every 3rd from 2nd)" },
 ] as const;
 
-const cronExpr = ref("* * * * *");
+const cronExpr = ref("*,11 * * * *");
 const error = ref("");
 
-const decodeCron = (cron: string) => {
+const hanldeCron = (cron: string) => {
   const isCronValid = validateCron(cron);
   if (!isCronValid) {
     error.value = "Invalid cron format";
     return;
   }
-
+  const val = decodeCron(cron);
+  if (!val) {
+    error.value = "something went wrong while decoding";
+    return;
+  }
   error.value = "";
+
+  return val;
 };
 
-const decoded = computed(() => decodeCron(cronExpr.value));
+const decoded = computed(() => hanldeCron(cronExpr.value));
 </script>
 
 <template>

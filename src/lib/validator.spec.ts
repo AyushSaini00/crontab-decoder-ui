@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { SPECIAL_FIELDS, validateCron } from "./validator";
+import { validateCron } from "./validator";
+import { SPECIAL_FIELDS } from "./constants";
 
 describe("validateCron()", () => {
   describe("invalid expressions", () => {
