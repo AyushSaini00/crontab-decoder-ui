@@ -1,7 +1,72 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { ref, computed } from "vue";
+
+const SYMBOLS = [
+  { symbol: "*", description: "wildcard any value" },
+  { symbol: ",", description: "value list separator. (eg: 0,15,30)" },
+  {
+    symbol: "-",
+    description: "range of values. (eg: 4-7 -> from 4 through 7)",
+  },
+  { symbol: "/", description: "step values. (eg: 2/3 -> every 3rd from 2nd)" },
+] as const;
+
+const cronExpr = ref("* * * * *");
+const error = ref("");
+
+const decodeCron = (cron: string) => {
+  const values = cron.trim().split(/\s+/);
+  if (values.length !== 5) {
+    error.value = "Invalid cron format";
+    return;
+  }
+
+  const [minute, hour, dayOfMonth, month, dayOfWeek] = values;
+
+  error.value = "";
+};
+
+const decoded = computed(() => decodeCron(cronExpr.value));
+</script>
 
 <template>
-  <h1 class="text-3xl font-bold">hello</h1>
+  <main
+    class="flex flex-col items-center min-h-screen max-w-[850px] my-0 mx-auto px-0 py-8"
+  >
+    <h1 class="text-3xl font-bold mb-10 text-[#190075]">Crontab decoder</h1>
+
+    <input
+      name="cron-expression"
+      placeholder="enter cron (e.g. * * * * *)"
+      v-model="cronExpr"
+      type="text"
+      class="text-4xl leading-10 text-center w-full rounded-xs border-4 py-2 px-5 border-solid border-[#5319ff] focus:outline-0 focus:shadow-xl"
+      :class="{ 'border-red-500': !!error }"
+    />
+
+    <div class="font-bold text-4xl text-center w-full h-9 mt-10 mb-8">
+      {{ decoded }}
+    </div>
+
+    <div class="text-xl text-red-500">{{ error }}</div>
+
+    <div
+      class="flex flex-col w-full max-w-96 gap-y-1.5 rounded border border-[#5319ff] p-2.5 mt-10"
+    >
+      <div class="flex items-center justify-between mb-1.5 border-b">
+        <div class="font-bold">Symbol</div>
+        <div class="font-bold">Meaning</div>
+      </div>
+      <div
+        v-for="item in SYMBOLS"
+        :key="item.symbol"
+        class="flex items-center justify-between"
+      >
+        <div>{{ item.symbol }}</div>
+        <div>{{ item.description }}</div>
+      </div>
+    </div>
+  </main>
 </template>
 
 <style scoped></style>
