@@ -70,3 +70,13 @@ export const MONTHS_MAP = {
   NOV: "November",
   DEC: "December",
 } as const;
+
+export const DAYS_MAP = {
+  SUN: "Sunday",
+  MON: "Monday",
+  TUE: "Tuesday",
+  WED: "Wednesday",
+  THU: "Thursday",
+  FRI: "Friday",
+  SAT: "Saturday",
+} as const;

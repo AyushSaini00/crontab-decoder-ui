@@ -98,12 +98,16 @@ export const validateField = (
         )
       )
         return false;
-    } else if (
-      !validateNum(token, lowerAllowedRange, upperAllowedRange) &&
-      !allowedSingleValues?.includes(token.toUpperCase()) &&
-      token !== "*" // to handle cases like: *,n or *,n
-    ) {
-      return false;
+    } else {
+      if (
+        !validateSingleValue(
+          token,
+          lowerAllowedRange,
+          upperAllowedRange,
+          allowedSingleValues
+        )
+      )
+        return false;
     }
   }
 
@@ -134,7 +138,7 @@ const validateStep = (
 
   if (!isPositiveInt && !isAllowedVal) return false;
 
-  // now that we have made sure that second is valid, we can check firstz
+  // now that we have made sure that second is valid, we can check first
   if (first === "*") return true;
 
   if (first.includes("-")) {
@@ -229,6 +233,20 @@ const validateRange = (
 
     return firstNum >= min && secondNum <= max && secondNum >= firstNum;
   }
+
+  return false;
+};
+
+const validateSingleValue = (
+  token: string,
+  min: number,
+  max: number,
+  allowedSingleValues: string[] | null
+): boolean => {
+  if (!token.length) return false; // fixes the case where for eg minute input is "1,2," -> due to trailing comman token would be "" so it should be invalid cron
+  if (token === "*") return true; // handles cases like */n or n/*
+  if (validateNum(token, min, max)) return true;
+  if (allowedSingleValues?.includes(token.toUpperCase())) return true;
 
   return false;
 };

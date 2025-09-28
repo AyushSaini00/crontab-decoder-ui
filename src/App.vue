@@ -13,7 +13,7 @@ const SYMBOLS = [
   { symbol: "/", description: "step values. (eg: 2/3 -> every 3rd from 2nd)" },
 ] as const;
 
-const cronExpr = ref("*,11 * * * *");
+const cronExpr = ref("1-2/26 1-2/3 * * *");
 const error = ref("");
 
 const hanldeCron = (cron: string) => {
@@ -37,7 +37,7 @@ const decoded = computed(() => hanldeCron(cronExpr.value));
 
 <template>
   <main
-    class="flex flex-col items-center min-h-screen max-w-[850px] my-0 mx-auto px-0 py-8"
+    class="flex flex-col items-center sm:max-w-xl md:max-w-[850px] my-0 mx-auto"
   >
     <h1 class="text-3xl font-bold mb-10 text-[#190075]">Crontab decoder</h1>
 
@@ -50,8 +50,12 @@ const decoded = computed(() => hanldeCron(cronExpr.value));
       :class="{ 'border-red-500': !!error }"
     />
 
-    <div class="font-bold text-4xl text-center w-full h-9 mt-10 mb-8">
-      {{ decoded }}
+    <div class="flex flex-wrap wrap-anywhere">
+      <div
+        class="flex flex-1 font-bold text-4xl text-center w-full min-h-9 mt-10 mb-8"
+      >
+        {{ decoded }}
+      </div>
     </div>
 
     <div class="text-xl text-red-500">{{ error }}</div>
