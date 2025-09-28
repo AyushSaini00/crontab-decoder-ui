@@ -35,6 +35,7 @@ describe("decodeCron()", () => {
     );
 
     const timeRelatedCases = [
+      // hour type as "any"
       {
         input: "* * * * *",
         expected: "At every minute.",
@@ -46,10 +47,6 @@ describe("decodeCron()", () => {
       {
         input: "1,2,5 * * * *",
         expected: "At minute 1, 2, 5.",
-      },
-      {
-        input: "5 * * * *",
-        expected: "At minute 5.",
       },
       {
         input: "2,* * * * *",
@@ -74,6 +71,39 @@ describe("decodeCron()", () => {
       {
         input: "4-6/3 * * * *",
         expected: "At every 3rd minute from 4 through 6.",
+      },
+      // minute type as "any"
+      {
+        input: "* 5 * * *",
+        expected: "At every minute past hour 5.",
+      },
+      {
+        input: "* 1,2,5 * * *",
+        expected: "At every minute past hour 1, 2, 5.",
+      },
+      {
+        input: "* 2,* * * *",
+        expected: "At every minute past hour 2, every hour.",
+      },
+      {
+        input: "* *,9 * * *",
+        expected: "At every minute past every hour, 9.",
+      },
+      {
+        input: "* */26 * * *",
+        expected: "At every minute past every 26th hour.",
+      },
+      {
+        input: "* 7/29 * * *",
+        expected: "At every minute past every 29th hour from 7 through 23.",
+      },
+      {
+        input: "* 6-20 * * *",
+        expected: "At every minute past every hour from 6 through 20.",
+      },
+      {
+        input: "* 6-20/33 * * *",
+        expected: "At every minute past every 33rd hour from 6 through 20.",
       },
     ];
 

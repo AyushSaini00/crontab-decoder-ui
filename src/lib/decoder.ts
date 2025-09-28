@@ -37,10 +37,10 @@ export const decodeCron = (cronExpr: string): string | undefined => {
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
 
   const minuteDesc = decodeField(minute!, "minute");
-  const hourDesc = decodeField(hour!, "minute");
-  const dayOfMonthDesc = decodeField(dayOfMonth!, "minute");
-  const monthDesc = decodeField(month!, "minute");
-  const dayOfWeekDesc = decodeField(dayOfWeek!, "minute");
+  const hourDesc = decodeField(hour!, "hour");
+  const dayOfMonthDesc = decodeField(dayOfMonth!, "dayOfMonth");
+  const monthDesc = decodeField(month!, "month");
+  const dayOfWeekDesc = decodeField(dayOfWeek!, "dayOfWeek");
 
   return buildHumanDescription(
     minuteDesc,
@@ -62,6 +62,9 @@ const decodeField = (
   const tokens = fieldValue.split(",");
   const descriptions: FieldDescription[] = [];
 
+  // has any token with specific values
+  const hasAnySpecificToken = tokens.length > 1 && tokens.includes("*");
+
   for (const token of tokens) {
     if (token.includes("/")) {
       descriptions.push(decodeStep(token, fieldType));
@@ -74,9 +77,7 @@ const decodeField = (
 
   if (descriptions.length === 1) return descriptions[0]!;
 
-  // has any token
-  const hasAnyToken = descriptions.find((desc) => desc.type === "any");
-  if (hasAnyToken) {
+  if (hasAnySpecificToken) {
     const allValues = descriptions.flatMap((desc) => desc.values);
     return { type: "any_with_specific", values: allValues, step: null };
   }
@@ -242,6 +243,46 @@ const buildHumanDescription = (
         description += `every ${getOrdinal(minute.step!)} minute from ${
           minute.values[0]?.display
         } through ${minute.values[1]?.display}`;
+        break;
+    }
+  } else if (minute.type === "any") {
+    switch (hour.type) {
+      case "specific":
+        const hourValues = hour.values.map((v) => v.display).join(", ");
+        description += `every minute past hour ${hourValues}`;
+        break;
+      case "any_with_specific":
+        const idxOfAnyValue = hour.values.findIndex(
+          (v) => v.display === `every hour`
+        );
+        const values = hour.values.map((v) => v.display);
+
+        if (idxOfAnyValue === 0) {
+          const [_, ...restValues] = values;
+          description += `every minute past every hour, ${restValues.join(
+            ", "
+          )}`;
+        } else {
+          description += `every minute past hour ${values.join(", ")}`;
+        }
+        break;
+      case "every":
+        description += `every minute past every ${getOrdinal(hour.step!)} hour`;
+        break;
+      case "from_step":
+        description += `every minute past every ${getOrdinal(
+          hour.step!
+        )} hour from ${hour.values[0]?.display} through 23`;
+        break;
+      case "range":
+        description += `every minute past every hour from ${hour.values[0]?.display} through ${hour.values[1]?.display}`;
+        break;
+      case "range_step":
+        description += `every minute past every ${getOrdinal(
+          hour.step!
+        )} hour from ${hour.values[0]?.display} through ${
+          hour.values[1]?.display
+        }`;
         break;
     }
   }
