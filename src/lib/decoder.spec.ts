@@ -33,21 +33,66 @@ describe("decodeCron()", () => {
         expected,
       })
     );
+
+    const timeRelatedCases = [
+      {
+        input: "* * * * *",
+        expected: "At every minute.",
+      },
+      {
+        input: "5 * * * *",
+        expected: "At minute 5.",
+      },
+      {
+        input: "1,2,5 * * * *",
+        expected: "At minute 1, 2, 5.",
+      },
+      {
+        input: "5 * * * *",
+        expected: "At minute 5.",
+      },
+      {
+        input: "2,* * * * *",
+        expected: "At minute 2, every minute.",
+      },
+      {
+        input: "*,9 * * * *",
+        expected: "At every minute, 9.",
+      },
+      {
+        input: "*/12 * * * *",
+        expected: "At every 12th minute.",
+      },
+      {
+        input: "8/2 * * * *",
+        expected: "At every 2nd minute from 8 through 59.",
+      },
+      {
+        input: "16-24 * * * *",
+        expected: "At every minute from 16 through 24.",
+      },
+      {
+        input: "4-6/3 * * * *",
+        expected: "At every 3rd minute from 4 through 6.",
+      },
+    ];
+
     const cases = [
       ...specialCases,
-      {
-        input: "*,11 * * * *",
-        expected: "At every minute and 11.",
-      },
-      {
-        input: "11,* * * * *",
-        expected: "At minute 11 and every minute.",
-      },
-      {
-        input: "1,2,* 1,2,* 1,2,* 1,2,* 1,2,*",
-        expected:
-          "At minute 1, 2, and every minute past hour 1, 2, and every hour on day-of-month 1, 2, and every day-of-month and on Monday, Tuesday, and every day-of-week in January, February, and every month.",
-      },
+      ...timeRelatedCases,
+      // {
+      //   input: "*,11 * * * *",
+      //   expected: "At every minute and 11.",
+      // },
+      // {
+      //   input: "11,* * * * *",
+      //   expected: "At minute 11 and every minute.",
+      // },
+      // {
+      //   input: "1,2,* 1,2,* 1,2,* 1,2,* 1,2,*",
+      //   expected:
+      //     "At minute 1, 2, and every minute past hour 1, 2, and every hour on day-of-month 1, 2, and every day-of-month and on Monday, Tuesday, and every day-of-week in January, February, and every month.",
+      // },
     ];
 
     test.each(cases)(

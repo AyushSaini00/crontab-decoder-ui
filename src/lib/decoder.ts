@@ -16,6 +16,7 @@ type FieldDescription = {
   type:
     | "any" // * -> "every minute"
     | "specific" // 5 -> "minute 5" (single value) | 1,3,7 -> "minute 1, 3, and 7" (multiple values)
+    | "any_with_specific" // 1,* -> "minute 1 and every minute" | *,3,4 -> "every minute, 3, and 4"
     | "every" // */15 -> "every 15th minute"
     | "from_step" // 5/10 -> "every 10th minute from 5 through 59"
     | "range" // 1-5 -> "every minute from 1 through 5"
@@ -73,6 +74,13 @@ const decodeField = (
 
   if (descriptions.length === 1) return descriptions[0]!;
 
+  // has any token
+  const hasAnyToken = descriptions.find((desc) => desc.type === "any");
+  if (hasAnyToken) {
+    const allValues = descriptions.flatMap((desc) => desc.values);
+    return { type: "any_with_specific", values: allValues, step: null };
+  }
+
   const allValues = descriptions.flatMap((desc) => desc.values);
   return { type: "specific", values: allValues, step: null };
 };
@@ -106,7 +114,12 @@ const decodeSingle = (
   token: string,
   fieldType: FieldType
 ): FieldDescription => {
-  if (token === "*") return { type: "any", values: [], step: null };
+  if (token === "*")
+    return {
+      type: "any",
+      values: [{ numeric: NaN, display: `every ${fieldType}` }],
+      step: null,
+    };
 
   const value = parseSingleValue(token, fieldType);
   return { type: "specific", values: [value], step: null };
@@ -198,8 +211,21 @@ const buildHumanDescription = (
         description += "every minute";
         break;
       case "specific":
-        const values = minute.values.map((v) => v.display).join(", ");
-        description += `minute ${values}`;
+        const specificValues = minute.values.map((v) => v.display).join(", ");
+        description += `minute ${specificValues}`;
+        break;
+      case "any_with_specific":
+        const idxOfAnyValue = minute.values.findIndex(
+          (v) => v.display === `every minute`
+        );
+        const values = minute.values.map((v) => v.display);
+
+        if (idxOfAnyValue === 0) {
+          const [_, ...restValues] = values;
+          description += `every minute, ${restValues.join(", ")}`;
+        } else {
+          description += `minute ${values.join(", ")}`;
+        }
         break;
       case "every":
         description += `every ${getOrdinal(minute.step!)} minute`;
