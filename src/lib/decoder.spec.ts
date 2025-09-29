@@ -67,6 +67,10 @@ describe("decodeCron()", () => {
         expected: "At every minute past every hour, and 9.",
       },
       {
+        input: "* *,2,9,23 * * *",
+        expected: "At every minute past every hour, 2, 9, and 23.",
+      },
+      {
         input: "* */26 * * *",
         expected: "At every minute past every 26th hour.",
       },
@@ -137,6 +141,25 @@ describe("decodeCron()", () => {
         input: "15 14 1 * *",
         expected: "At 14:15, on the 1st.",
       },
+      {
+        input: "8 21 * JAN *",
+        expected: "At 21:08, in January.",
+      },
+      {
+        input: "* * 3/10 * *",
+        expected:
+          "At every minute, on the every 10th dayOfMonth from 3rd through 31st.",
+      },
+      {
+        input: "* * * 3/10 *",
+        expected:
+          "At every minute, in every 10th month from March through December.",
+      },
+      {
+        input: "* * * * 3/10",
+        expected:
+          "At every minute, on every 10th dayOfWeek from Wednesday through Saturday.",
+      },
     ];
 
     const cases = [
@@ -146,7 +169,7 @@ describe("decodeCron()", () => {
       {
         input: "1,2,* 1,2,* 1,2,* 1,2,* 1,2,*",
         expected:
-          "At minute 1, 2, and every minute past hour 1, 2, and every hour on day-of-month 1, 2, and every day-of-month and on Monday, Tuesday, and every day-of-week in January, February, and every month.",
+          "At minute 1, 2, and every minute past hour 1, 2, and every hour, in January, February, and every month, on the 1st, 2nd, and every dayOfMonth, on Monday, Tuesday, and every dayOfWeek.",
       },
     ];
 

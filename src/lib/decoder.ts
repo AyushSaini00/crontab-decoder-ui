@@ -176,12 +176,10 @@ const formateNumericValue = (num: number, fieldType: FieldType): string => {
       return getOrdinal(num);
     case "month":
       const monthFullNames = Object.values(MONTHS_MAP);
-      return monthFullNames[num - 1] || num.toString();
+      return monthFullNames[num - 1]!;
     case "dayOfWeek":
       const dayFullNames = Object.values(DAYS_MAP);
-      return dayFullNames[num] || num.toString();
-    default:
-      return num.toString();
+      return dayFullNames[num]!;
   }
 };
 
@@ -319,18 +317,14 @@ const buildFieldPhrase = (
       return `every ${getOrdinal(step!)} ${fieldType} from ${
         values[0]?.display
       } through ${values[1]?.display}`;
-
-    default:
-      return "";
   }
 };
 
+//values will always be >= 1 lenght as allowed types are "any" or "any_with_specific"
 const formatValuesList = (
   values: ParsedValue[],
   fieldType: FieldType
 ): string => {
-  if (values.length === 0) return "";
-
   if (values.length === 1) {
     return addFieldPrefix(values[0]!.display, fieldType);
   }
@@ -342,21 +336,11 @@ const formatValuesList = (
   return addFieldPrefix(`${formatted}, and ${last}`, fieldType);
 };
 
+//values will always be >= 2 lenght as type is "any_with_specific"
 const joinDisplayValues = (values: ParsedValue[]): string => {
-  if (values.length === 0) return "";
-
-  if (values.length === 1) {
-    return values[0]!.display;
-  }
-
   const displays = values.map((v) => v.display);
   const last = displays.pop();
-
-  if (displays.length === 1) {
-    return `${displays[0]}, and ${last}`;
-  }
-
-  return `${displays.join(", ")} and ${last}`;
+  return `${displays.join(", ")}, and ${last}`;
 };
 
 const addFieldPrefix = (valueStr: string, fieldType: FieldType): string => {
@@ -371,8 +355,6 @@ const addFieldPrefix = (valueStr: string, fieldType: FieldType): string => {
       return valueStr; // month names
     case "dayOfWeek":
       return valueStr; // day names
-    default:
-      return valueStr;
   }
 };
 
@@ -388,8 +370,6 @@ const getMaxValueForField = (fieldType: FieldType): string => {
       return "December";
     case "dayOfWeek":
       return "Saturday";
-    default:
-      return "";
   }
 };
 
