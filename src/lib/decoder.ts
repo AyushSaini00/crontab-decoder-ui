@@ -1,3 +1,4 @@
+import { validateCron } from "./validator";
 import type { FieldType } from "./constants";
 import {
   ALLOWED_SINGLE_VALUES,
@@ -27,6 +28,10 @@ type FieldDescription = {
 
 // use this after validateCron
 export const decodeCron = (cronExpr: string): string | undefined => {
+  if (!validateCron(cronExpr)) {
+    throw new Error("invalid cron expression");
+  }
+
   const parts = cronExpr.trim().split(/\s+/);
   const first = parts[0]!;
 

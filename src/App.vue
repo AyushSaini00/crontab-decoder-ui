@@ -43,7 +43,6 @@ const decoded = computed(() => hanldeCron(cronExpr.value));
 
     <input
       name="cron-expression"
-      placeholder="enter cron (e.g. * * * * *)"
       v-model="cronExpr"
       type="text"
       class="text-4xl leading-10 text-center w-full rounded-xs border-4 py-2 px-5 border-solid border-[#5319ff] focus:outline-0 focus:shadow-xl"
