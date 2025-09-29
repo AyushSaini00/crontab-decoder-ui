@@ -203,91 +203,189 @@ const buildHumanDescription = (
   month: FieldDescription,
   dayOfWeek: FieldDescription
 ): string => {
-  let description = "At ";
+  const timePart = buildTimePart(minute, hour);
+  const datePart = buildDatePart(dayOfMonth, month, dayOfWeek);
 
-  // handling time (minute & hour)
-  if (hour.type === "any") {
-    switch (minute.type) {
-      case "any":
-        description += "every minute";
-        break;
-      case "specific":
-        const specificValues = minute.values.map((v) => v.display).join(", ");
-        description += `minute ${specificValues}`;
-        break;
-      case "any_with_specific":
-        const idxOfAnyValue = minute.values.findIndex(
-          (v) => v.display === `every minute`
-        );
-        const values = minute.values.map((v) => v.display);
+  return `At ${timePart}${datePart ? `, ${datePart}` : ""}.`;
+};
 
-        if (idxOfAnyValue === 0) {
-          const [_, ...restValues] = values;
-          description += `every minute, ${restValues.join(", ")}`;
-        } else {
-          description += `minute ${values.join(", ")}`;
-        }
-        break;
-      case "every":
-        description += `every ${getOrdinal(minute.step!)} minute`;
-        break;
-      case "from_step":
-        description += `every ${getOrdinal(minute.step!)} minute from ${
-          minute.values[0]?.display
-        } through 59`;
-        break;
-      case "range":
-        description += `every minute from ${minute.values[0]?.display} through ${minute.values[1]?.display}`;
-        break;
-      case "range_step":
-        description += `every ${getOrdinal(minute.step!)} minute from ${
-          minute.values[0]?.display
-        } through ${minute.values[1]?.display}`;
-        break;
-    }
-  } else if (minute.type === "any") {
-    switch (hour.type) {
-      case "specific":
-        const hourValues = hour.values.map((v) => v.display).join(", ");
-        description += `every minute past hour ${hourValues}`;
-        break;
-      case "any_with_specific":
-        const idxOfAnyValue = hour.values.findIndex(
-          (v) => v.display === `every hour`
-        );
-        const values = hour.values.map((v) => v.display);
+const buildTimePart = (
+  minute: FieldDescription,
+  hour: FieldDescription
+): string => {
+  const minutePhrase = buildFieldPhrase(minute, "minute");
+  const hourPhrase = buildFieldPhrase(hour, "hour");
 
-        if (idxOfAnyValue === 0) {
-          const [_, ...restValues] = values;
-          description += `every minute past every hour, ${restValues.join(
-            ", "
-          )}`;
-        } else {
-          description += `every minute past hour ${values.join(", ")}`;
-        }
-        break;
-      case "every":
-        description += `every minute past every ${getOrdinal(hour.step!)} hour`;
-        break;
-      case "from_step":
-        description += `every minute past every ${getOrdinal(
-          hour.step!
-        )} hour from ${hour.values[0]?.display} through 23`;
-        break;
-      case "range":
-        description += `every minute past every hour from ${hour.values[0]?.display} through ${hour.values[1]?.display}`;
-        break;
-      case "range_step":
-        description += `every minute past every ${getOrdinal(
-          hour.step!
-        )} hour from ${hour.values[0]?.display} through ${
-          hour.values[1]?.display
-        }`;
-        break;
-    }
+  if (minute.type === "any" && hour.type === "any") {
+    return "every minute";
   }
 
-  return description + ".";
+  if (minute.type === "any") {
+    return `every minute past ${hourPhrase}`;
+  }
+
+  if (hour.type === "any") {
+    return minutePhrase;
+  }
+
+  // for single-value specific minute and hour, we would like to format time as HH:MM
+  if (
+    minute.type === "specific" &&
+    minute.values.length === 1 &&
+    hour.type === "specific" &&
+    hour.values.length === 1
+  ) {
+    const hourVal = hour.values[0]!;
+    const minuteVal = minute.values[0]!;
+
+    const formattedHour =
+      hourVal.numeric < 10 ? "0" + hourVal.display : hourVal.display;
+    const formattedMinute =
+      minuteVal.numeric < 10 ? "0" + minuteVal.display : minuteVal.display;
+
+    return `${formattedHour}:${formattedMinute}`;
+  }
+
+  return `${minutePhrase} past ${hourPhrase}`;
+};
+
+const buildDatePart = (
+  dayOfMonth: FieldDescription,
+  month: FieldDescription,
+  dayOfWeek: FieldDescription
+): string => {
+  const parts: string[] = [];
+
+  if (month.type !== "any") {
+    const monthPhrase = buildFieldPhrase(month, "month");
+    parts.push(`in ${monthPhrase}`);
+  }
+
+  if (dayOfMonth.type !== "any") {
+    const dayOfMonthPhrase = buildFieldPhrase(dayOfMonth, "dayOfMonth");
+    parts.push(`on the ${dayOfMonthPhrase}`);
+  }
+
+  if (dayOfWeek.type !== "any") {
+    const dayOfWeekPhrase = buildFieldPhrase(dayOfWeek, "dayOfWeek");
+    parts.push(`on ${dayOfWeekPhrase}`);
+  }
+
+  return parts.join(", ");
+};
+
+const buildFieldPhrase = (
+  field: FieldDescription,
+  fieldType: FieldType
+): string => {
+  const { type, values, step } = field;
+
+  switch (type) {
+    case "any":
+      return `every ${fieldType}`;
+
+    case "specific":
+      return formatValuesList(values, fieldType);
+
+    case "any_with_specific":
+      const idxOfAnyValue = values.findIndex(
+        (v) => v.display === `every ${fieldType}`
+      );
+
+      if (idxOfAnyValue === 0) {
+        return `${joinDisplayValues(values)}`;
+      } else {
+        return formatValuesList(values, fieldType);
+      }
+
+    case "every":
+      return `every ${getOrdinal(step!)} ${fieldType}`;
+
+    case "from_step":
+      const maxValue = getMaxValueForField(fieldType);
+      return `every ${getOrdinal(step!)} ${fieldType} from ${
+        values[0]?.display
+      } through ${maxValue}`;
+
+    case "range":
+      return `every ${fieldType} from ${values[0]?.display} through ${values[1]?.display}`;
+
+    case "range_step":
+      return `every ${getOrdinal(step!)} ${fieldType} from ${
+        values[0]?.display
+      } through ${values[1]?.display}`;
+
+    default:
+      return "";
+  }
+};
+
+const formatValuesList = (
+  values: ParsedValue[],
+  fieldType: FieldType
+): string => {
+  if (values.length === 0) return "";
+
+  if (values.length === 1) {
+    return addFieldPrefix(values[0]!.display, fieldType);
+  }
+
+  const displays = values.map((v) => v.display);
+  const last = displays.pop()!;
+  const formatted = displays.join(", ");
+
+  return addFieldPrefix(`${formatted}, and ${last}`, fieldType);
+};
+
+const joinDisplayValues = (values: ParsedValue[]): string => {
+  if (values.length === 0) return "";
+
+  if (values.length === 1) {
+    return values[0]!.display;
+  }
+
+  const displays = values.map((v) => v.display);
+  const last = displays.pop();
+
+  if (displays.length === 1) {
+    return `${displays[0]}, and ${last}`;
+  }
+
+  return `${displays.join(", ")} and ${last}`;
+};
+
+const addFieldPrefix = (valueStr: string, fieldType: FieldType): string => {
+  switch (fieldType) {
+    case "minute":
+      return `minute ${valueStr}`;
+    case "hour":
+      return `hour ${valueStr}`;
+    case "dayOfMonth":
+      return valueStr; // already has ordinal format
+    case "month":
+      return valueStr; // month names
+    case "dayOfWeek":
+      return valueStr; // day names
+    default:
+      return valueStr;
+  }
+};
+
+const getMaxValueForField = (fieldType: FieldType): string => {
+  switch (fieldType) {
+    case "minute":
+      return "59";
+    case "hour":
+      return "23";
+    case "dayOfMonth":
+      return getOrdinal(31);
+    case "month":
+      return "December";
+    case "dayOfWeek":
+      return "Saturday";
+    default:
+      return "";
+  }
 };
 
 const isSpecialField = (

@@ -13,7 +13,7 @@ const SYMBOLS = [
   { symbol: "/", description: "step values. (eg: 2/3 -> every 3rd from 2nd)" },
 ] as const;
 
-const cronExpr = ref("1-2/26 1-2/3 * * *");
+const cronExpr = ref("* * * * *");
 const error = ref("");
 
 const hanldeCron = (cron: string) => {
